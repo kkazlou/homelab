@@ -1,9 +1,6 @@
 # Ansible
 *.retry
 
-# Python
-.venv/
-
 # Visual Studio Code
 .vscode/
 

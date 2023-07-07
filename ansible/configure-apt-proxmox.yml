@@ -1,0 +1,12 @@
+---
+- name: Add Proxmox VE No-Subscription Repository
+  hosts: proxmox
+  become: true
+
+  tasks:
+
+    - name: Copy pve-no-subscription.list to target host
+      ansible.builtin.copy:
+        src: files/pve-no-subscription.list
+        dest: /etc/apt/sources.list.d/
+        mode: '0644'

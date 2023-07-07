@@ -1,0 +1,11 @@
+[proxy]
+control
+
+[dns]
+pihole1
+pihole2
+
+[proxmox]
+pve01
+pve02
+pve03
