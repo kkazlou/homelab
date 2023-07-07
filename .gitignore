@@ -1,0 +1,11 @@
+# Ansible
+*.retry
+
+# Python
+.venv/
+
+# Visual Studio Code
+.vscode/
+
+# macOS
+.DS_Store
