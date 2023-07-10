@@ -1,0 +1,12 @@
+---
+- name: Install core packages for virtual machines
+  hosts: vm
+  become: true
+
+  tasks:
+
+    - name: Install core packages for virtual machines
+      ansible.builtin.apt:
+        name:
+          - qemu-guest-agent
+        update_cache: true

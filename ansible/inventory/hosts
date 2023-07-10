@@ -9,3 +9,14 @@ pihole2
 pve01
 pve02
 pve03
+
+[k3s]
+k3s-node-01
+k3s-node-02
+k3s-node-03
+
+[vm]
+pihole1
+k3s-node-01
+k3s-node-02
+k3s-node-03
