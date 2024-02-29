@@ -1,6 +1,7 @@
 ---
 - name: Update all packages to their latest version
   hosts: all
+  serial: 1
   become: true
 
   tasks:

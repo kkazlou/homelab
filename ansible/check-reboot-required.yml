@@ -12,5 +12,5 @@
 
     - name: Print the hosname if reboot is required
       ansible.builtin.debug:
-        msg: System {{ inventory_hostname }} restart required
+        msg: System {{ inventory_hostname }} reboot required
       when: reboot_required.stat.exists
