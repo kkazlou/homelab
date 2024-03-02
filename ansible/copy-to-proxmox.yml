@@ -1,0 +1,17 @@
+---
+- name: Copy files to target host
+  hosts: pve03
+
+  tasks:
+
+    - name: Copy SSH public key
+      ansible.builtin.copy:
+        src: ../ssh/ansible.pub
+        dest: ansible.pub
+        mode: '0644'
+
+    - name: Copy files to target host
+      ansible.builtin.copy:
+        src: ../proxmox/create-template.sh
+        dest: create-template.sh
+        mode: '0755'
