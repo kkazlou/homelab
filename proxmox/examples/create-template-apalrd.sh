@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Example from apalrd
+# Author: apalrd
 # https://www.apalrd.net/posts/2023/pve_cloud/
-# https://www.youtube.com/watch?v=E7rv08ttv8k
+# https://youtu.be/E7rv08ttv8k?si=D-2qvrUqejfB14eF
 
 #Create template
 #args:
