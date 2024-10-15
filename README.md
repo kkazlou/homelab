@@ -2,7 +2,7 @@
 ![homelab](pics/homelab-medium.jpeg)
 
 ## Hardware
-The initial idea was to build compact, energy efficient, low noise system, but capable to run enterprise level software at home. 
+The idea is to build small, energy efficient cluster, capable to run enterprise level software at home. 
 
 ### Network
 * UniFi UDM-Pro router
@@ -22,7 +22,7 @@ The initial idea was to build compact, energy efficient, low noise system, but c
     * 1 TB x2 SSD
 
 ## Software
-* [Proxmox cluster](proxmox)
+* [Proxmox VE cluster](proxmox)
 * [Ansible](ansible)
 * Kubernetes
 * Grafana
