@@ -15,12 +15,13 @@ function create_template() {
     # Create a VM with specific name, OS type, amount of memory and CPU cores
     echo "Creating VM $1 ($2)"
     qm create $1 --name $2 --ostype l26
-    qm set $1 --memory 4096 --cores 2
+    qm set $1 --memory 4096 --cores 2 --cpu host
 
     # Configure SCSI drive
     qm set $1 --scsihw virtio-scsi-single
-    qm disk import $1 $3 ${storage} --format qcow2
-    qm set $1 --scsi0 ${storage}:$1/vm-$1-disk-0.qcow2,discard=on,iothread=1
+    #qm disk import $1 $3 ${storage} --format qcow2
+    #qm set $1 --scsi0 ${storage}:$1/vm-$1-disk-0.qcow2,discard=on,iothread=1
+    qm set $1 --scsi0 ${storage}:0,import-from="$(pwd)/$3",discard=on,iothread=1
     qm resize $1 scsi0 32G
 
     # Configure other oprions
@@ -45,7 +46,8 @@ function create_template() {
 }
 
 # Name of your Proxmox storage
-export storage=nfs-fast
+#export storage=nfs-fast
+export storage=local-lvm
 
 # Username to create on VM template
 export username=ansible
@@ -53,18 +55,18 @@ export username=ansible
 # Path to SSH public key
 export ssh_public_key=ansible.pub
 
-# Ubuntu Server 22.04 LTS (Jammy Jellyfish)
-wget -c "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
-create_template 900 "template-ubuntu-22.04-server-cloud" "jammy-server-cloudimg-amd64.img"
+# Ubuntu Server 24.04 LTS (Noble Numbat)
+wget --continue "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+create_template 900 "template-ubuntu-24.04-server-cloud" "noble-server-cloudimg-amd64.img"
 
-# Ubuntu Minimal 22.04 LTS (Jammy Jellyfish)
-wget -c "https://cloud-images.ubuntu.com/minimal/releases/jammy/release/ubuntu-22.04-minimal-cloudimg-amd64.img"
-create_template 901 "template-ubuntu-22.04-minimal-cloud" "ubuntu-22.04-minimal-cloudimg-amd64.img"
+# Ubuntu Minimal 24.04 LTS (Noble Numbat)
+wget --continue "https://cloud-images.ubuntu.com/minimal/releases/noble/release/ubuntu-24.04-minimal-cloudimg-amd64.img"
+create_template 901 "template-ubuntu-24.04-minimal-cloud" "ubuntu-24.04-minimal-cloudimg-amd64.img"
 
 # Debian 12 (Bookworm)
-wget -c "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
+wget --continue "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
 create_template 910 "template-debian-12-cloud" "debian-12-genericcloud-amd64.qcow2"
 
-# Fedora 39
-wget -c https://download.fedoraproject.org/pub/fedora/linux/releases/39/Cloud/x86_64/images/Fedora-Cloud-Base-39-1.5.x86_64.qcow2
-create_template 920 "template-fedora-39-cloud" "Fedora-Cloud-Base-39-1.5.x86_64.qcow2"
+# Fedora 40
+wget --continue "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2"
+create_template 920 "template-fedora-40-cloud" "Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2"
