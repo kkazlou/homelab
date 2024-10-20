@@ -22,7 +22,7 @@ function create_template() {
     #qm disk import $1 $3 ${storage} --format qcow2
     #qm set $1 --scsi0 ${storage}:$1/vm-$1-disk-0.qcow2,discard=on,iothread=1
     qm set $1 --scsi0 ${storage}:0,import-from="$(pwd)/$3",discard=on,iothread=1
-    qm resize $1 scsi0 32G
+    qm resize $1 scsi0 8G
 
     # Configure other oprions
     qm set $1 --boot order=scsi0
