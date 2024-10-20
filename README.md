@@ -24,6 +24,7 @@ The idea is to build small, energy efficient cluster, capable to run enterprise 
 ## Software
 * [Proxmox VE cluster](proxmox)
 * [Ansible](ansible)
+* [Docker](docker)
 * Kubernetes
 * Grafana
 * Prometheus

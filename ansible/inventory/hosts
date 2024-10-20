@@ -1,6 +1,3 @@
-[proxy]
-control
-
 [dns]
 pihole1
 pihole2
@@ -10,13 +7,14 @@ pve01
 pve02
 pve03
 
+[docker]
+docker-node01
+docker-node02
+docker-node03
+
 [k3s]
-k3s-node-01
-k3s-node-02
-k3s-node-03
+k3s-node01
+k3s-node02
+k3s-node03
 
 [vm]
-pihole1
-k3s-node-01
-k3s-node-02
-k3s-node-03

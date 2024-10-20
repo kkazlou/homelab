@@ -1,0 +1,25 @@
+- name: Configure Docker NFS Volume
+  hosts: docker
+  become: yes
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install NFS client
+      ansible.builtin.apt:
+        name:
+          - nfs-common
+        state: present
+    
+    - name: Create NFS volume directory
+      ansible.builtin.file:
+        path: /mnt/nfs-fast
+        state: directory
+    
+    - name: Mount NFS volume
+      ansible.posix.mount:
+        src: 192.168.2.2:/volume2/Docker-fast
+        path: /mnt/nfs-fast
+        fstype: nfs
+        state: mounted
