@@ -67,6 +67,6 @@ create_template 901 "template-ubuntu-24.04-minimal-cloud" "ubuntu-24.04-minimal-
 wget --continue "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
 create_template 910 "template-debian-12-cloud" "debian-12-genericcloud-amd64.qcow2"
 
-# Fedora 40
-wget --continue "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2"
-create_template 920 "template-fedora-40-cloud" "Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2"
+# Fedora 41
+wget --continue "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2"
+create_template 920 "template-fedora-41-cloud" "Fedora-Cloud-Base-Generic.x86_64-41-1.14.qcow2"
