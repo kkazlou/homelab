@@ -18,3 +18,4 @@ k3s-node02
 k3s-node03
 
 [vm]
+grafana
