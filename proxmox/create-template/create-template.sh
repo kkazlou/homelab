@@ -55,18 +55,18 @@ export username=ansible
 # Path to SSH public key
 export ssh_public_key=ansible.pub
 
-# Ubuntu Server 24.04 LTS (Noble Numbat)
-wget --continue "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
-create_template 900 "template-ubuntu-24.04-server-cloud" "noble-server-cloudimg-amd64.img"
+# Ubuntu Server 26.04 LTS (Resolute Raccoon)
+wget --continue "https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img"
+create_template 900 "template-ubuntu-26.04-server-cloud" "resolute-server-cloudimg-amd64.img"
 
-# Ubuntu Minimal 24.04 LTS (Noble Numbat)
-wget --continue "https://cloud-images.ubuntu.com/minimal/releases/noble/release/ubuntu-24.04-minimal-cloudimg-amd64.img"
-create_template 901 "template-ubuntu-24.04-minimal-cloud" "ubuntu-24.04-minimal-cloudimg-amd64.img"
+## Ubuntu Minimal 26.04 LTS (Resolute Raccoon)
+wget --continue "https://cloud-images.ubuntu.com/minimal/releases/resolute/release/ubuntu-26.04-minimal-cloudimg-amd64.img"
+create_template 901 "template-ubuntu-26.04-minimal-cloud" "ubuntu-26.04-minimal-cloudimg-amd64.img"
 
-# Debian 12 (Bookworm)
-wget --continue "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
-create_template 910 "template-debian-12-cloud" "debian-12-genericcloud-amd64.qcow2"
+# Debian 13 (Trixie)
+wget --continue "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
+create_template 910 "template-debian-13-cloud" "debian-13-genericcloud-amd64.qcow2"
 
-# Fedora 41
-wget --continue "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2"
-create_template 920 "template-fedora-41-cloud" "Fedora-Cloud-Base-Generic.x86_64-41-1.14.qcow2"
+# Fedora 45
+wget --continue "https://download.fedoraproject.org/pub/fedora/linux/releases/45/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-45-1.4.x86_64.qcow2"
+create_template 920 "template-fedora-45-cloud" "Fedora-Cloud-Base-Generic-45-1.4.x86_64.qcow2"
