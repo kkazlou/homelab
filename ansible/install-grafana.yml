@@ -1,39 +1,36 @@
 ---
-- name: Install Grafana OSS Edition on Ubuntu
+- name: Install Grafana OSS Edition
   hosts: grafana
-  become: yes
+  become: true
+
   tasks:
-    - name: Install required dependencies
+    - name: Install prerequisites
       ansible.builtin.apt:
         name:
-          - apt-transport-https
-          - software-properties-common
-          - wget
+          - ca-certificates
+          - python3-debian  # required by deb822_repository
         state: present
-        update_cache: yes
-
-    - name: Add Grafana GPG key
-      ansible.builtin.apt_key:
-        url: https://apt.grafana.com/gpg.key
-        state: present
+        update_cache: true
+        cache_valid_time: 3600
 
     - name: Add Grafana repository
-      ansible.builtin.apt_repository:
-        repo: "deb https://apt.grafana.com stable main"
+      ansible.builtin.deb822_repository:
+        name: grafana
+        types: [deb]
+        uris: https://apt.grafana.com
+        suites: [stable]
+        components: [main]
+        signed_by: https://apt.grafana.com/gpg.key
         state: present
-        filename: grafana
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
 
     - name: Install Grafana
       ansible.builtin.apt:
         name: grafana
         state: present
+        update_cache: true
 
     - name: Ensure Grafana service is started and enabled
-      ansible.builtin.service:
+      ansible.builtin.systemd_service:
         name: grafana-server
         state: started
-        enabled: yes
+        enabled: true

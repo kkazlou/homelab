@@ -14,6 +14,11 @@ ansible -b -m reboot --forks 1 group1
 
 ## Running Playbooks
 
+Install required collections first.
+```
+ansible-galaxy collection install -r requirements.yml
+```
+
 List hosts, don't run the actual playbook.
 ```
 ansible-playbook update-all-packages.yml --list-hosts

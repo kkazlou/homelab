@@ -1,32 +1,36 @@
 ---
-- name: Install Docker Engine on Ubuntu
+- name: Install Docker Engine
   hosts: docker
-  become: yes
-  gather_facts: yes
-  tasks:
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
+  become: true
+  gather_facts: true
 
+  vars:
+    docker_distro: "{{ ansible_facts['distribution'] | lower }}"
+    docker_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+    # With become, facts are gathered as root, so use the user that invoked sudo.
+    docker_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_user, true) }}"
+
+  tasks:
     - name: Install prerequisites
       ansible.builtin.apt:
         name:
-          - apt-transport-https
           - ca-certificates
-          - curl
-          - gnupg
-          - lsb-release
+          - python3-debian  # required by deb822_repository
         state: present
+        update_cache: true
+        cache_valid_time: 3600
 
-    - name: Add Docker Repository
+    - name: Add Docker repository
       ansible.builtin.deb822_repository:
         name: docker
         types: [deb]
-        uris: https://download.docker.com/linux/ubuntu
+        uris: "https://download.docker.com/linux/{{ docker_distro }}"
         suites: ["{{ ansible_facts['distribution_release'] }}"]
         components: [stable]
-        architectures: [amd64]
-        signed_by: https://download.docker.com/linux/ubuntu/gpg
+        architectures: ["{{ docker_arch_map[ansible_facts['architecture']] }}"]
+        signed_by: "https://download.docker.com/linux/{{ docker_distro }}/gpg"
         state: present
 
     - name: Install Docker Engine
@@ -35,16 +39,19 @@
           - docker-ce
           - docker-ce-cli
           - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
         state: present
+        update_cache: true
 
     - name: Ensure Docker service is running
-      ansible.builtin.service:
+      ansible.builtin.systemd_service:
         name: docker
         state: started
-        enabled: yes
+        enabled: true
 
-    - name: Add current user to docker group
+    - name: Add remote user to docker group
       ansible.builtin.user:
-        name: "{{ ansible_facts['user_id'] }}"
+        name: "{{ docker_user }}"
         groups: docker
-        append: yes
+        append: true
