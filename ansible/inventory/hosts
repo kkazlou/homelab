@@ -19,3 +19,6 @@ docker-node03
 
 [vm]
 #grafana
+
+[vm:children]
+docker
