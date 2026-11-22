@@ -1,6 +1,6 @@
 [dns]
-pihole1
-pihole2
+pihole01
+pihole02
 
 [proxmox]
 pve01
@@ -13,9 +13,9 @@ docker-node02
 docker-node03
 
 [k3s]
-k3s-node01
-k3s-node02
-k3s-node03
+#k3s-node01
+#k3s-node02
+#k3s-node03
 
 [vm]
-grafana
+#grafana
