@@ -12,6 +12,13 @@ docker-node01
 docker-node02
 docker-node03
 
+[arcane_manager]
+docker-node01
+
+[arcane_agent]
+docker-node02
+docker-node03
+
 [k3s]
 #k3s-node01
 #k3s-node02

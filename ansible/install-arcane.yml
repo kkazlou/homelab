@@ -1,0 +1,94 @@
+---
+# Deploys the Arcane manager to [arcane_manager] and Arcane agents to [arcane_agent].
+# Requires Docker Engine (install-docker-engine.yml) and secrets in
+# inventory/group_vars/docker/vault.yml. See docker/README.md for the enrollment flow.
+
+- name: Install Arcane manager
+  hosts: arcane_manager
+  become: true
+  gather_facts: true
+
+  vars:
+    # With become, facts are gathered as root, so use the user that invoked sudo.
+    arcane_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_user, true) }}"
+
+  tasks:
+    - name: Look up Arcane file owner
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ arcane_user }}"
+
+    - name: Set Arcane PUID/PGID
+      ansible.builtin.set_fact:
+        arcane_puid: "{{ ansible_facts['getent_passwd'][arcane_user][1] }}"
+        arcane_pgid: "{{ ansible_facts['getent_passwd'][arcane_user][2] }}"
+
+    - name: Create Arcane directory
+      ansible.builtin.file:
+        path: "{{ arcane_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0750'
+
+    - name: Create Arcane projects directory
+      ansible.builtin.file:
+        path: "{{ arcane_projects_dir }}"
+        state: directory
+        owner: "{{ arcane_puid }}"
+        group: "{{ arcane_pgid }}"
+        mode: '0755'
+
+    - name: Render Arcane manager compose file
+      ansible.builtin.template:
+        src: templates/arcane-manager-compose.yml.j2
+        dest: "{{ arcane_dir }}/compose.yaml"
+        owner: root
+        group: root
+        mode: '0600'
+
+    - name: Start Arcane manager
+      community.docker.docker_compose_v2:
+        project_src: "{{ arcane_dir }}"
+        state: present
+        pull: missing
+        wait: true
+        wait_timeout: 120
+
+- name: Install Arcane agents
+  hosts: arcane_agent
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Ensure an agent enrollment token is configured
+      ansible.builtin.assert:
+        that: arcane_agent_token | length > 0
+        fail_msg: >-
+          vault_arcane_agent_token is empty. Open {{ arcane_manager_url }},
+          go to Agents -> Enrollment Tokens -> Create Enrollment Token, then
+          run `ansible-vault edit inventory/group_vars/docker/vault.yml`
+          and set vault_arcane_agent_token.
+        quiet: true
+
+    - name: Create Arcane directory
+      ansible.builtin.file:
+        path: "{{ arcane_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0750'
+
+    - name: Render Arcane agent compose file
+      ansible.builtin.template:
+        src: templates/arcane-agent-compose.yml.j2
+        dest: "{{ arcane_dir }}/compose.yaml"
+        owner: root
+        group: root
+        mode: '0600'
+
+    - name: Start Arcane agent
+      community.docker.docker_compose_v2:
+        project_src: "{{ arcane_dir }}"
+        state: present
+        pull: missing

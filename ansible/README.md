@@ -29,6 +29,16 @@ Limit a playbook to the specific host or group.
 ansible-playbook update-all-packages.yml --limit group1
 ```
 
+## Secrets
+
+Secrets are stored with ansible-vault in `inventory/group_vars/*/vault.yml`. The vault password
+is read from `~/.ansible/homelab-vault-pass` (see `ansible.cfg`); keep a backup of it outside
+this repo.
+```
+ansible-vault view inventory/group_vars/docker/vault.yml
+ansible-vault edit inventory/group_vars/docker/vault.yml
+```
+
 
 ## References
 * [Ansible Documentation / Installation Guide](https://docs.ansible.com/ansible/latest/index.html)

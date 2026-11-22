@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+services:
+  arcane:
+    image: ghcr.io/getarcaneapp/manager:{{ arcane_version }}
+    container_name: arcane
+    restart: unless-stopped
+    ports:
+      - "{{ arcane_port }}:3552"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - arcane-data:/app/data
+      - {{ arcane_projects_dir }}:{{ arcane_projects_dir }}
+    environment:
+      ARCANE_APP_URL: "{{ arcane_manager_url }}"
+      ARCANE_ENCRYPTION_KEY: "{{ arcane_encryption_key }}"
+      ARCANE_PROJECTS_DIRECTORY: "{{ arcane_projects_dir }}"
+      PUID: "{{ arcane_puid }}"
+      PGID: "{{ arcane_pgid }}"
+      TZ: "{{ arcane_timezone }}"
+    cgroup: host
+    healthcheck:
+      test: ["CMD", "./arcane", "health", "--timeout", "2s"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  arcane-data:

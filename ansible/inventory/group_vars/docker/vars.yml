@@ -1,0 +1,15 @@
+---
+# Arcane Docker manager (https://getarcane.app)
+# The manager runs on the first host of [arcane_manager]; [arcane_agent] hosts
+# connect out to it. Secrets live in vault.yml (ansible-vault encrypted).
+arcane_version: v3.1.1
+arcane_dir: /opt/arcane
+arcane_port: 3552
+arcane_timezone: America/Chicago
+arcane_projects_dir: /opt/docker
+
+arcane_manager_host: "{{ groups['arcane_manager'][0] }}"
+arcane_manager_url: "http://{{ arcane_manager_host }}:{{ arcane_port }}"
+
+arcane_encryption_key: "{{ vault_arcane_encryption_key }}"
+arcane_agent_token: "{{ vault_arcane_agent_token | default('') }}"

@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+services:
+  arcane-agent:
+    image: ghcr.io/getarcaneapp/agent:{{ arcane_version }}
+    container_name: arcane-agent
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Holds the agent key obtained at enrollment; without it the agent re-enrolls.
+      - arcane-agent-data:/app/data
+    environment:
+      ARCANE_AGENT: "true"
+      ARCANE_AGENT_TRANSPORT: auto
+      ARCANE_AGENT_TOKEN: "{{ arcane_agent_token }}"
+      ARCANE_MANAGER_API_URL: "{{ arcane_manager_url }}"
+      TZ: "{{ arcane_timezone }}"
+
+volumes:
+  arcane-agent-data:
