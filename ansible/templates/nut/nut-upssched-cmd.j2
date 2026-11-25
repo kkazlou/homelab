@@ -1,0 +1,23 @@
+#!/bin/sh
+# Managed by Ansible. Called by upssched with the timer name as the first argument.
+
+case "$1" in
+    onbatt-shutdown)
+        # Don't let a stale timer shut this host down when mains power is back.
+        status=$(/usr/bin/upsc {{ nut_client_ups }} ups.status 2>/dev/null)
+        case " $status " in
+            *" OB "*)
+                logger -t upssched-cmd "On battery for {{ nut_client_onbatt_shutdown_delay }}s, shutting down"
+                # On a secondary this shuts down this host only.
+                /usr/sbin/upsmon -c fsd
+                ;;
+            *)
+                # Lost contact while on battery is handled by upsmon itself (DEADTIME).
+                logger -t upssched-cmd "Timer expired but UPS status is '$status', not shutting down"
+                ;;
+        esac
+        ;;
+    *)
+        logger -t upssched-cmd "Unrecognized command: $1"
+        ;;
+esac

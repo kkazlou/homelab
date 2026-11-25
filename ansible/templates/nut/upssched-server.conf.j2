@@ -1,0 +1,5 @@
+CMDSCRIPT /usr/local/sbin/nut-upssched-cmd
+PIPEFN /run/nut/upssched.pipe
+LOCKFN /run/nut/upssched.lock
+AT ONBATT {{ nut_ups_name }}@localhost START-TIMER unas-poweroff {{ nut_unas_onbatt_shutdown_delay }}
+AT ONLINE {{ nut_ups_name }}@localhost CANCEL-TIMER unas-poweroff

@@ -1,0 +1,177 @@
+---
+# Installs and configures Network UPS Tools (NUT) on [nut_server], the host with
+# the UPS attached over USB. Settings live in inventory/group_vars/nut_server/vars.yml,
+# passwords in vault.yml next to it.
+
+- name: Install NUT server
+  hosts: nut_server
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Install NUT
+      ansible.builtin.apt:
+        name:
+          - nut-client
+          - nut-server
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Render nut.conf and upsd.conf
+      ansible.builtin.template:
+        src: "templates/nut/{{ item }}.j2"
+        dest: "/etc/nut/{{ item }}"
+        owner: root
+        group: nut
+        mode: '0640'
+      loop:
+        - nut.conf
+        - upsd.conf
+      notify:
+        - Restart NUT server
+        - Restart NUT monitor
+
+    - name: Render ups.conf
+      ansible.builtin.template:
+        src: templates/nut/ups.conf.j2
+        dest: /etc/nut/ups.conf
+        owner: root
+        group: nut
+        mode: '0640'
+      notify:
+        - Reconfigure NUT drivers
+        - Restart NUT driver
+        - Restart NUT server
+
+    - name: Render upsd.users
+      ansible.builtin.template:
+        src: templates/nut/upsd.users.j2
+        dest: /etc/nut/upsd.users
+        owner: root
+        group: nut
+        mode: '0640'
+      diff: false  # contains passwords
+      notify: Restart NUT server
+
+    - name: Check the UNAS SSH key
+      ansible.builtin.stat:
+        path: "{{ nut_unas_ssh_key }}"
+      register: nut_unas_key
+
+    - name: Ensure the UNAS SSH key is in place
+      ansible.builtin.assert:
+        that:
+          - nut_unas_key.stat.exists
+          - nut_unas_key.stat.pw_name == 'nut'
+          - nut_unas_key.stat.mode == '0400'
+        fail_msg: >-
+          Copy the private key for the UNAS to {{ nut_unas_ssh_key }} with owner nut
+          and mode 0400. It is not stored in this repo.
+        quiet: true
+
+    - name: Create UNAS SSH directory
+      ansible.builtin.file:
+        path: "{{ nut_unas_ssh_dir }}"
+        state: directory
+        owner: root
+        group: nut
+        mode: '0750'
+
+    - name: Pin UNAS SSH host key
+      ansible.builtin.copy:
+        content: "{{ nut_unas_host }} {{ nut_unas_host_key }}\n"
+        dest: "{{ nut_unas_known_hosts }}"
+        owner: root
+        group: nut
+        mode: '0640'
+
+    # Installed before upsmon.conf, which starts using them. upssched reads
+    # its config on every event, so no restart is needed.
+    - name: Install NUT scripts
+      ansible.builtin.template:
+        src: "templates/nut/{{ item.src }}"
+        dest: "/usr/local/sbin/{{ item.dest }}"
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - { src: nut-unas.j2, dest: nut-unas }
+        - { src: nut-shutdown.j2, dest: nut-shutdown }
+        - { src: nut-upssched-cmd-server.j2, dest: nut-upssched-cmd }
+
+    - name: Render upssched.conf
+      ansible.builtin.template:
+        src: templates/nut/upssched-server.conf.j2
+        dest: /etc/nut/upssched.conf
+        owner: root
+        group: nut
+        mode: '0640'
+
+    - name: Render upsmon.conf
+      ansible.builtin.template:
+        src: templates/nut/upsmon.conf.j2
+        dest: /etc/nut/upsmon.conf
+        owner: root
+        group: nut
+        mode: '0640'
+      diff: false  # contains passwords
+      notify: Restart NUT monitor
+
+    - name: Apply configuration changes
+      ansible.builtin.meta: flush_handlers
+
+    - name: Ensure NUT services are started and enabled
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - nut-driver-enumerator.path
+        - nut-server.service
+        - nut-monitor.service
+
+    - name: Check that the UPS is reachable
+      ansible.builtin.command: "upsc {{ nut_ups_name }}@localhost ups.status"
+      register: nut_ups_status
+      changed_when: false
+      check_mode: false
+      retries: 6
+      delay: 5
+      until: nut_ups_status.rc == 0
+
+    # Fails if the UNAS can't be reached or the restricted command changed.
+    - name: Check that the UNAS accepts the shutdown key
+      ansible.builtin.command: /usr/local/sbin/nut-unas check
+      register: nut_unas_check
+      changed_when: false
+      failed_when: nut_unas_check.stdout != 'ok'
+      when: not ansible_check_mode
+
+    - name: Show UPS status
+      ansible.builtin.debug:
+        msg: "{{ nut_ups_name }}: {{ nut_ups_status.stdout }}"
+
+  # Handlers run in the order they are defined here.
+  handlers:
+    # Regenerates the nut-driver@<ups> instances from ups.conf.
+    - name: Reconfigure NUT drivers
+      ansible.builtin.systemd_service:
+        name: nut-driver-enumerator.service
+        state: restarted
+
+    # The enumerator may only live-reload a running driver, which skips device matching.
+    - name: Restart NUT driver
+      ansible.builtin.systemd_service:
+        name: "nut-driver@{{ nut_ups_name }}.service"
+        state: restarted
+
+    - name: Restart NUT server
+      ansible.builtin.systemd_service:
+        name: nut-server.service
+        state: restarted
+
+    - name: Restart NUT monitor
+      ansible.builtin.systemd_service:
+        name: nut-monitor.service
+        state: restarted

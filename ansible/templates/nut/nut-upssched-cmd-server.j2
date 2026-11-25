@@ -1,0 +1,21 @@
+#!/bin/sh
+# Managed by Ansible. Called by upssched with the timer name as the first argument.
+
+case "$1" in
+    unas-poweroff)
+        # Don't power off the UNAS from a stale timer when mains power is back.
+        status=$(/usr/bin/upsc {{ nut_ups_name }}@localhost ups.status 2>/dev/null)
+        case " $status " in
+            *" OB "*)
+                logger -t upssched-cmd "On battery for {{ nut_unas_onbatt_shutdown_delay }}s, powering off the UNAS"
+                /usr/local/sbin/nut-unas poweroff 3
+                ;;
+            *)
+                logger -t upssched-cmd "Timer expired but UPS status is '$status', not powering off the UNAS"
+                ;;
+        esac
+        ;;
+    *)
+        logger -t upssched-cmd "Unrecognized command: $1"
+        ;;
+esac

@@ -2,6 +2,9 @@
 pihole01
 pihole02
 
+[nut_server]
+pihole02
+
 [proxmox]
 pve01
 pve02
@@ -29,3 +32,6 @@ docker-node03
 
 [vm:children]
 docker
+
+[nut_client:children]
+proxmox

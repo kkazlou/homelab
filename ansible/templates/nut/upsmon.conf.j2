@@ -1,0 +1,5 @@
+MONITOR {{ nut_ups_name }}@localhost 1 admin {{ nut_admin_password }} primary
+SHUTDOWNCMD "{{ nut_shutdown_script }}"
+NOTIFYCMD /usr/sbin/upssched
+NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC
+NOTIFYFLAG ONLINE SYSLOG+WALL+EXEC

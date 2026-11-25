@@ -1,0 +1,5 @@
+MONITOR {{ nut_client_ups }} 1 monuser {{ nut_client_password }} secondary
+SHUTDOWNCMD "{{ nut_client_shutdown_command }}"
+NOTIFYCMD /usr/sbin/upssched
+NOTIFYFLAG ONBATT SYSLOG+WALL+EXEC
+NOTIFYFLAG ONLINE SYSLOG+WALL+EXEC

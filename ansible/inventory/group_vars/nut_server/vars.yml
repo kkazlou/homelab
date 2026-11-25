@@ -1,0 +1,39 @@
+---
+# Network UPS Tools (https://networkupstools.org)
+# Secrets live in vault.yml (ansible-vault encrypted).
+nut_mode: netserver
+nut_listen_address: 0.0.0.0
+nut_listen_port: 3493
+
+# Rendered as-is into ups.conf. `nut-scanner -U` prints these for attached UPSes.
+# Leave out bus, device and busport: they can change on replug or reboot.
+nut_ups_name: ups
+nut_ups_options:
+  driver: usbhid-ups
+  port: auto
+  vendorid: 051D
+  productid: "0003"
+  desc: Smart-UPS 750
+  serial: 3S2025X18231
+  vendor: American Power Conversion
+
+# admin is used by the local upsmon, monuser by remote clients.
+nut_admin_password: "{{ vault_nut_admin_password }}"
+nut_monuser_password: "{{ vault_nut_monuser_password }}"
+
+# Run by upsmon at low battery, after the UNAS has been powered off.
+nut_shutdown_command: /sbin/shutdown -h +0
+nut_shutdown_script: /usr/local/sbin/nut-shutdown
+
+# UniFi UNAS Pro on the same UPS. It can't run NUT, so this host powers it off over
+# SSH as the nut user. On the UNAS the key is restricted to /root/nut-ssh-cmd.sh,
+# which accepts only `check` and `poweroff`. The private key is not in this repo:
+# copy it to nut_unas_ssh_key, owner nut, mode 0400.
+nut_unas_host: 192.168.2.3
+nut_unas_user: root
+nut_unas_host_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA1WNxyeL9EeMZZ+CUOKc6ti4wQKiFxfMpUj6CUkHYT8
+nut_unas_ssh_dir: /etc/nut/ssh
+nut_unas_ssh_key: "{{ nut_unas_ssh_dir }}/unas_ed25519"
+nut_unas_known_hosts: "{{ nut_unas_ssh_dir }}/known_hosts"
+# Power off the UNAS after this many seconds on battery. Low battery powers it off too.
+nut_unas_onbatt_shutdown_delay: 300

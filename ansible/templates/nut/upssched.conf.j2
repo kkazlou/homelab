@@ -1,0 +1,5 @@
+CMDSCRIPT {{ nut_client_upssched_cmd }}
+PIPEFN /run/nut/upssched.pipe
+LOCKFN /run/nut/upssched.lock
+AT ONBATT {{ nut_client_ups }} START-TIMER onbatt-shutdown {{ nut_client_onbatt_shutdown_delay }}
+AT ONLINE {{ nut_client_ups }} CANCEL-TIMER onbatt-shutdown

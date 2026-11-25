@@ -1,0 +1,83 @@
+---
+# Installs the NUT client (upsmon) on [nut_client] and connects it as a secondary
+# to the NUT server on [nut_server] (install-nut-server.yml). Settings live in
+# inventory/group_vars/nut_client/vars.yml; the UPS name and the monuser password
+# come from the nut_server group vars.
+
+- name: Install NUT client
+  hosts: nut_client
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install NUT client
+      ansible.builtin.apt:
+        name: nut-client
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Render nut.conf
+      ansible.builtin.template:
+        src: templates/nut/nut.conf.j2
+        dest: /etc/nut/nut.conf
+        owner: root
+        group: nut
+        mode: '0640'
+      notify: Restart NUT monitor
+
+    # Installed before upsmon.conf, which starts using them. upssched reads
+    # its config on every event, so no restart is needed.
+    - name: Install upssched command script
+      ansible.builtin.template:
+        src: templates/nut/nut-upssched-cmd.j2
+        dest: "{{ nut_client_upssched_cmd }}"
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Render upssched.conf
+      ansible.builtin.template:
+        src: templates/nut/upssched.conf.j2
+        dest: /etc/nut/upssched.conf
+        owner: root
+        group: nut
+        mode: '0640'
+
+    - name: Render upsmon.conf
+      ansible.builtin.template:
+        src: templates/nut/upsmon-client.conf.j2
+        dest: /etc/nut/upsmon.conf
+        owner: root
+        group: nut
+        mode: '0640'
+      diff: false  # contains a password
+      notify: Restart NUT monitor
+
+    - name: Apply configuration changes
+      ansible.builtin.meta: flush_handlers
+
+    # The remaining tasks need the package, which a first --check run doesn't install.
+    - name: Ensure NUT monitor is started and enabled
+      ansible.builtin.systemd_service:
+        name: nut-monitor.service
+        state: started
+        enabled: true
+      when: not ansible_check_mode
+
+    # A wrong password leaves upsmon running but not logged in, so check the login.
+    - name: Check that this host is logged in to the NUT server
+      ansible.builtin.command: "upsc -c {{ nut_client_ups }}"
+      register: nut_clients
+      changed_when: false
+      retries: 6
+      delay: 5
+      until: ansible_facts['default_ipv4']['address'] in nut_clients.stdout_lines
+      when: not ansible_check_mode
+
+  handlers:
+    - name: Restart NUT monitor
+      ansible.builtin.systemd_service:
+        name: nut-monitor.service
+        state: restarted
+      when: not ansible_check_mode
