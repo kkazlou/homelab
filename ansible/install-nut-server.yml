@@ -110,11 +110,6 @@
         - { src: nut-shutdown.j2, dest: nut-shutdown }
         - { src: nut-upssched-cmd-server.j2, dest: nut-upssched-cmd }
 
-    - name: Remove replaced nut-unas script
-      ansible.builtin.file:
-        path: /usr/local/sbin/nut-unas
-        state: absent
-
     - name: Render upssched.conf
       ansible.builtin.template:
         src: templates/nut/upssched-server.conf.j2
