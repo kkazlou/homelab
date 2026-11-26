@@ -1,0 +1,51 @@
+#!/bin/sh
+# Managed by Ansible. Sends a command to a host that can't run NUT, over
+# restricted SSH as the nut user.
+# Usage: nut-remote <host> check|poweroff [attempts]
+# Hosts: {{ nut_remote_hosts.keys() | join(', ') }}
+
+usage() {
+    echo "usage: $0 {{ nut_remote_hosts.keys() | join('|') }} check|poweroff [attempts]" >&2
+    exit 2
+}
+
+name="$1"
+cmd="$2"
+attempts="${3:-1}"
+case "$name" in
+{% for name, target in nut_remote_hosts.items() %}
+    {{ name }}) dest={{ target.user }}@{{ target.host }}; key={{ nut_remote_ssh_dir }}/{{ target.key }} ;;
+{% endfor %}
+    *) usage ;;
+esac
+case "$cmd" in
+    check|poweroff) ;;
+    *) usage ;;
+esac
+
+# upsmon runs SHUTDOWNCMD as root; the keys belong to nut.
+if [ "$(id -u)" -eq 0 ]; then
+    exec runuser -u nut -- "$0" "$@"
+fi
+
+i=1
+while :; do
+    out=$(timeout 30 ssh -T -F /dev/null \
+        -i "$key" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=10 \
+        -o StrictHostKeyChecking=yes -o UserKnownHostsFile={{ nut_remote_known_hosts }} \
+        -o GlobalKnownHostsFile=/dev/null \
+        "$dest" "$cmd" </dev/null 2>&1)
+    rc=$?
+    if [ "$rc" -eq 0 ]; then
+        logger -t nut-remote "$name $cmd succeeded (attempt $i/$attempts): $out"
+        echo "$out"
+        exit 0
+    fi
+    logger -t nut-remote "$name $cmd failed (attempt $i/$attempts, rc=$rc): $out"
+    if [ "$i" -ge "$attempts" ]; then
+        echo "$out" >&2
+        exit "$rc"
+    fi
+    i=$((i + 1))
+    sleep 10
+done

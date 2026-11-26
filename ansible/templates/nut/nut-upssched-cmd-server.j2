@@ -8,7 +8,7 @@ case "$1" in
         case " $status " in
             *" OB "*)
                 logger -t upssched-cmd "On battery for {{ nut_unas_onbatt_shutdown_delay }}s, powering off the UNAS"
-                /usr/local/sbin/nut-unas poweroff 3
+                /usr/local/sbin/nut-remote unas poweroff 3
                 ;;
             *)
                 logger -t upssched-cmd "Timer expired but UPS status is '$status', not powering off the UNAS"

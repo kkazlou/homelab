@@ -1,6 +1,8 @@
 #!/bin/sh
-# Managed by Ansible. upsmon SHUTDOWNCMD on the NUT server: power off the UNAS,
-# then this host. The UNAS attempt is time-limited so this host always shuts down.
+# Managed by Ansible. upsmon SHUTDOWNCMD on the NUT server: power off the UNAS
+# (if the 5-minute timer didn't already), then the UDM-Pro router, then this host.
+# Each attempt is time-limited so this host always shuts down.
 
-timeout 45 /usr/local/sbin/nut-unas poweroff 1
+timeout 45 /usr/local/sbin/nut-remote unas poweroff 1
+timeout 60 /usr/local/sbin/nut-remote udm poweroff 2
 exec {{ nut_shutdown_command }}

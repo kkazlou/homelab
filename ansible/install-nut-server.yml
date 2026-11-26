@@ -54,34 +54,44 @@
       diff: false  # contains passwords
       notify: Restart NUT server
 
-    - name: Check the UNAS SSH key
+    - name: Check the remote host SSH keys
       ansible.builtin.stat:
-        path: "{{ nut_unas_ssh_key }}"
-      register: nut_unas_key
+        path: "{{ nut_remote_ssh_dir }}/{{ item.value.key }}"
+      loop: "{{ nut_remote_hosts | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      register: nut_remote_keys
 
-    - name: Ensure the UNAS SSH key is in place
+    - name: Ensure the remote host SSH keys are in place
       ansible.builtin.assert:
         that:
-          - nut_unas_key.stat.exists
-          - nut_unas_key.stat.pw_name == 'nut'
-          - nut_unas_key.stat.mode == '0400'
+          - item.stat.exists
+          - item.stat.pw_name == 'nut'
+          - item.stat.mode == '0400'
         fail_msg: >-
-          Copy the private key for the UNAS to {{ nut_unas_ssh_key }} with owner nut
-          and mode 0400. It is not stored in this repo.
+          Copy the private key for {{ item.item.key }} to
+          {{ nut_remote_ssh_dir }}/{{ item.item.value.key }} with owner nut and mode 0400.
+          It is not stored in this repo.
         quiet: true
+      loop: "{{ nut_remote_keys.results }}"
+      loop_control:
+        label: "{{ item.item.key }}"
 
-    - name: Create UNAS SSH directory
+    - name: Create remote host SSH directory
       ansible.builtin.file:
-        path: "{{ nut_unas_ssh_dir }}"
+        path: "{{ nut_remote_ssh_dir }}"
         state: directory
         owner: root
         group: nut
         mode: '0750'
 
-    - name: Pin UNAS SSH host key
+    - name: Pin remote host SSH host keys
       ansible.builtin.copy:
-        content: "{{ nut_unas_host }} {{ nut_unas_host_key }}\n"
-        dest: "{{ nut_unas_known_hosts }}"
+        content: |
+          {% for name, target in nut_remote_hosts.items() %}
+          {{ target.host }} {{ target.host_key }}
+          {% endfor %}
+        dest: "{{ nut_remote_known_hosts }}"
         owner: root
         group: nut
         mode: '0640'
@@ -96,9 +106,14 @@
         group: root
         mode: '0755'
       loop:
-        - { src: nut-unas.j2, dest: nut-unas }
+        - { src: nut-remote.j2, dest: nut-remote }
         - { src: nut-shutdown.j2, dest: nut-shutdown }
         - { src: nut-upssched-cmd-server.j2, dest: nut-upssched-cmd }
+
+    - name: Remove replaced nut-unas script
+      ansible.builtin.file:
+        path: /usr/local/sbin/nut-unas
+        state: absent
 
     - name: Render upssched.conf
       ansible.builtin.template:
@@ -140,12 +155,37 @@
       delay: 5
       until: nut_ups_status.rc == 0
 
-    # Fails if the UNAS can't be reached or the restricted command changed.
-    - name: Check that the UNAS accepts the shutdown key
-      ansible.builtin.command: /usr/local/sbin/nut-unas check
-      register: nut_unas_check
+    # The UPS raises low battery itself, so the threshold lives in the UPS.
+    - name: Read low battery runtime
+      ansible.builtin.command: "upsc {{ nut_ups_name }}@localhost battery.runtime.low"
+      register: nut_runtime_low
       changed_when: false
-      failed_when: nut_unas_check.stdout != 'ok'
+      check_mode: false
+
+    - name: Set low battery runtime
+      ansible.builtin.command: >-
+        upsrw -s battery.runtime.low={{ nut_ups_runtime_low }}
+        -u admin -p {{ nut_admin_password }} {{ nut_ups_name }}@localhost
+      when: nut_runtime_low.stdout | int != nut_ups_runtime_low | int
+      changed_when: true
+      no_log: true  # password on the command line
+
+    - name: Check low battery runtime
+      ansible.builtin.command: "upsc {{ nut_ups_name }}@localhost battery.runtime.low"
+      register: nut_runtime_low_new
+      changed_when: false
+      retries: 6
+      delay: 5
+      until: nut_runtime_low_new.stdout | int == nut_ups_runtime_low | int
+      when: not ansible_check_mode
+
+    # Fails if a host can't be reached or its restricted command changed.
+    - name: Check that the remote hosts accept their shutdown keys
+      ansible.builtin.command: "/usr/local/sbin/nut-remote {{ item }} check"
+      loop: "{{ nut_remote_hosts.keys() | list }}"
+      register: nut_remote_check
+      changed_when: false
+      failed_when: nut_remote_check.stdout != 'ok'
       when: not ansible_check_mode
 
     - name: Show UPS status

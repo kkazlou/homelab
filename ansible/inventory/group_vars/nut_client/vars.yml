@@ -4,7 +4,7 @@
 nut_mode: netclient
 
 nut_client_server: "{{ groups['nut_server'][0] }}"
-nut_client_ups: "{{ hostvars[nut_client_server]['nut_ups_name'] }}@{{ nut_client_server }}"
+nut_client_ups: "{{ hostvars[nut_client_server]['nut_ups_name'] }}@{{ hostvars[nut_client_server]['nut_server_address'] }}"
 nut_client_password: "{{ hostvars[nut_client_server]['nut_monuser_password'] }}"
 
 # Run by upsmon when the NUT server signals a shutdown. Proxmox stops its guests first.
